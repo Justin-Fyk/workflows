@@ -57,4 +57,23 @@ Analyzing 850 GitHub Actions runs (`3,159 billed minutes` across 15 days) and 20
 | **2. GitHub's 1-Minute Minimum Per-Job Tax** | Running 4-second skip/drift checks in separate workflow files and splitting `migrate → deploy → smoke` into 3 jobs burned **~500 billed minutes** on <55 minutes of work. | Consolidate sequential steps (`migrate → deploy → smoke`) into **one job**; fold fast checks (`migration-drift`) into the main `ci.yml` job. |
 | **3. Reviewing After Opening the PR (4.2 Pushes/PR)** | Opening PRs before running `code-review` caused 139 PR CI runs across ~35 PRs. | Run Blind `/code-review` locally against `origin/main` **before** `gh pr create` so PRs open clean in 1 push. |
 | **4. Hourly Webhook Crons on CI VMs** | An hourly `curl` job (`8s` runtime) bills `1 full minute × 24 × 30 = 720 min/month` (24% of a 3,000-min quota). | Offload HTTP webhook pings to zero-VM schedulers (`pg_cron`, Cloudflare Workers, Vercel Cron) or throttle GHA cadence to ≥4 hours. |
-| **5. Coarse 3-Slice Vertical Specs vs. Micro-Tickets** | Multi-surface features sliced into **3 vertical PRs** (DB/Domain → UI/E2E → `/styleguide` promotion) shipped cleanly, whereas 3 separate cosmetic PRs on a single checkbox burned 45 CI minutes in 90 minutes. | Mandate **1–3 coarse vertical feature PRs** for Tier 2 specs, and batch Tier 1 visual/copy tweaks in a live browser before opening a single PR. |
+| **5. Coarse Vertical Specs vs. Micro-Tickets** | Multi-surface features sliced into **2–3 vertical PRs** shipped cleanly, whereas 3 separate cosmetic PRs on a single checkbox burned 45 CI minutes in 90 minutes. | Mandate **1–3 coarse vertical feature PRs** for Tier 2 specs, and batch Tier 1 visual/copy tweaks in a live browser before opening a single PR. |
+
+---
+
+## 4. Design System & `/styleguide` Audit: Fixing Drift, Visual Distortion & Bloat
+
+Auditing the project's `/canvas` and `/styleguide` implementation (`49 files`, `~10,000+ lines`, `page.tsx` at `1,734 lines`, `styleguide.module.css` at `1,862 lines`) uncovered three structural root causes behind visual flaws and drift in `/styleguide`:
+
+1. **Legacy Pre-`/canvas` Fake Replicas (~2,800 Lines of Drift):**
+   Before `/canvas` existed, whole features (such as `discovery-hierarchy-*.tsx` across 6 files / 2,226 lines, `mobile-shell-specimen.tsx`, and `mobile-nav-specimen.tsx`) were built as hand-coded fake replicas inside `src/app/styleguide/` rather than importing real `src/components/` primitives. When production routes evolved, those replicas froze in time and taught agents outdated markup.
+2. **Cramming Full-Page Feature Screens into Narrow `<StateCell>` Boxes:**
+   Promoting entire feature views (`Dashboard`, `Messages`, `AccountActivity`) into `/styleguide` forced full-viewport screens (`1200px–1440px` with viewport `@media` queries and `position: sticky` headers) inside narrow `<StateCell>` cards—breaking sticky positioning, preventing mobile media queries from firing, and causing agents to write 1,862 lines of hacky `styleguide.module.css` overrides.
+3. **Public Production Exposure:**
+   Neither `/canvas` nor `/styleguide` had a production environment gate (`VERCEL_ENV === "production"` → `notFound()`), exposing internal workbenches on the live public site.
+
+### The Upgraded 3-Surface Design Law (Now Encoded in `canvas`, `design-system`, and `checklist.md`)
+* **Keep design tokens, `DESIGN.md`, `/canvas`, and `/styleguide` inside the project repo** (so TypeScript and `check:design` verify them atomically), but gate `/canvas` and `/styleguide` to return `notFound()` in public production deployments.
+* **`/canvas` is strictly ephemeral:** Deleted in the same PR that ships the production feature.
+* **`/styleguide` is strictly for Foundations + Reusable UI Primitives (`2+` screen consumers) + Shared Cards:** Every specimen must import the real component from `src/components/` (enforced by `check:design`), with zero fake replicas and zero full-page feature screens.
+* **Full-Page Feature Screens use their Shipped Production Routes as Model Screens:** Locked by deterministic seeded fixtures, `test:visual` baselines at `390px` & `1280px`, and `npm run verify` feature-map journeys—eliminating the redundant "promote feature screen to `/styleguide`" PR tax.

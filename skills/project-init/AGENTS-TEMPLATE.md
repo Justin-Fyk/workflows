@@ -7,15 +7,14 @@
 3. **Domain concepts**: Use exact vocabulary from `GLOSSARY.md` (and never its `_Avoid_` terms). Surface contradictions between code, docs, and glossary before proceeding. Load architecture, spec, design, and ADR docs on demand per **On-Demand Context Routing** below.
 4. **Planning & spec changes**: Changes to a ratified spec go in as an ADR (when hard to reverse, surprising without context, or carrying a real trade-off) plus a spec update — never silently.
 5. **Design system & tokens**: Consume semantic tokens (`src/styles/tokens.css`) and shared UI primitives (`src/components/ui/`) — no hardcoded colors, fonts, easing, or spacing values; no inline `style` design values. Z-index only via `--z-*` tokens.
-6. **Visual source of truth & 3-Tier Surface Gate (`/canvas` → Production → `/styleguide`)**:
-   - Precedence: Ratified ADR/issue → `DESIGN.md` & `docs/design/` + `tokens.css` → `/styleguide` catalog & approved model screens → all other references.
-   - Routine UI tasks build strictly from ratified `/styleguide` primitives.
-   - New screen concepts, shell changes, or compositions with no `/styleguide` precedent trigger the **3-Tier Surface Gate**:
-     1. Invoke the `canvas` skill (and `modern-web-guidance` for new interactive primitives), write `docs/design/briefs/<slug>.md`, build in `/canvas` inside real site chrome, run `npm run check` only, and self-critique live `390px` + `1280px` screenshots.
+6. **Visual source of truth, Lean `/styleguide` & 3-Tier Surface Gate (`/canvas` → Production → `/styleguide` / Model Screens)**:
+   - Precedence: Ratified ADR/issue → `DESIGN.md` & `docs/design/` + `tokens.css` → `/styleguide` primitive catalog & approved Model Screens (real production routes) → all other references.
+   - **Dev-Only Gate:** Both `/canvas` and `/styleguide` must return `notFound()` in public production deployments (`VERCEL_ENV === "production"`).
+   - **Lean Atomic `/styleguide` (Zero Fake Replicas, Zero Full-Page Screens):** `/styleguide` catalogs **only** Foundations (tokens/type/color/spacing) + Reusable UI Primitives (`src/components/ui/*`, `controls.css`, `SaveBand`) + Shared Domain Cards reused across **2+ screens**. Every specimen must import the real component from `src/components/` (zero local mock replicas, zero layout-distorting CSS overrides). Full-page feature screens never enter `/styleguide`; their shipped production routes (locked by seeded fixtures + `test:visual` + `verify` journeys) are the Model Screens.
+   - **3-Tier Surface Gate:** New screen concepts, shell changes, or compositions with no `/styleguide` precedent must:
+     1. Invoke the `canvas` skill (and `modern-web-guidance` for new interactive primitives), write `docs/design/briefs/<slug>.md` (classifying each element as `Promote Primitive to /styleguide` vs. `Production Route Only`), build in `/canvas` inside real site chrome, run `npm run check` only, and self-critique live `390px` + `1280px` screenshots.
      2. Obtain owner live sign-off on `/canvas` before running `to-spec` / `to-tickets`.
-     3. Build production feature with shared components in `src/components/`.
-     4. Owner verifies live production screen.
-     5. Promote to `/styleguide` by **co-importing those exact shared components** (zero duplicate markup in `/styleguide`) and remove the graduated `/canvas` prototype in the same PR.
+     3. Build the production feature, **delete the graduated `/canvas` prototype**, and promote **only new reusable primitives (2+ screens)** to `/styleguide` via direct `src/components/ui/` co-import.
 7. **Secrets & environment**: `.env*` files are never committed. Privileged/service-role keys are server-only — never imported into client components, never logged, never behind public client env prefixes.
 8. **Implementation entry point**: `implement` and `implement-spec` are user-invoked skills. After `to-tickets` publishes tickets, **stop and hand back**: report the ticket list and tell the user to run `/implement` or `/implement-spec`. When authorized to build, invoke `tdd` (`red → green → refactor`) at the highest behavioral seam and pass the Verification Gate.
 

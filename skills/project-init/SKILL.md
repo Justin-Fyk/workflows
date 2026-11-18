@@ -1,4 +1,4 @@
-﻿---
+---
 name: project-init
 description: "Walk a brand-new project through the full operating system: gate commands, read-only CI, branch enforcement, planning docs, tracker labels, evidence vocabulary, environment separation. Use when starting a new project, setting up a fresh repo, or initializing workflow guardrails. For repos that already exist (even freshly scaffolded ones), use project-adopt instead."
 license: MIT

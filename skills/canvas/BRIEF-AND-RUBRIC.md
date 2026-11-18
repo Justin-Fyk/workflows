@@ -9,7 +9,7 @@ Copy the template below into `docs/design/briefs/<slug>.md` in **Step 1** and co
 ```markdown
 # Design Brief: <Feature / Surface Name>
 
-- **Status**: Draft | Owner Signed Off (`YYYY-MM-DD`) | Graduated to `/styleguide` (PR #<N>)
+- **Status**: Draft | Owner Signed Off (`YYYY-MM-DD`) | Graduated to Production (PR #<N>)
 - **Canvas Preview URLs**: `/canvas#<section-id>`, `/canvas/preview/<slug>` (`390px` & `1280px`)
 - **Related Issues**: #<issue>
 
@@ -33,14 +33,15 @@ Copy the template below into `docs/design/briefs/<slug>.md` in **Step 1** and co
 | <e.g. Facebook Desktop Messenger Drawer> | <e.g. 420px right-anchored floating overlay triggered from top-right header icon> | <e.g. Multi-window bottom chat tabs that cover card grids> |
 | <e.g. Linear Inbox> | <e.g. Single-line scannable rows with left-aligned action pills on actionable items> | <e.g. Keyboard-only command palette required for basic triage> |
 
-## 3. Component & Token Inventory
+## 3. Component, Token & Graduation Inventory
 
-| UI Element | Existing Primitive / Token (`src/components/`, `tokens.css`) | New Candidate? (Requires 1-line justification) |
+| UI Element | Existing Primitive / Token (`src/components/`, `tokens.css`) | Graduation Target (`Reuse` / `Promote Primitive to /styleguide` / `Production Route Only`) |
 |---|---|---|
 | Host shell & header | Primary site chrome component, real brand logo, `--container-site`, `--container-content` | Reuse |
 | Primary controls | `Button`, `IconButton`, `FilterChips`, `CountBadge`, `SearchField` (or repo equivalents) | Reuse |
 | Domain cards / rows | Existing domain card/row components + realistic fixture dataset | Reuse |
-| <Net-new surface> | <Tokens consumed: `--color-surface-*`, `--spacing-*`, `--z-overlay`> | New: <why existing `/styleguide` components cannot express this> |
+| <New reusable primitive (2+ screens)> | <Tokens consumed: `--color-surface-*`, `--spacing-*`, `--z-overlay`> | **Promote Primitive to `/styleguide`**: co-import from `src/components/ui/` |
+| <New feature screen / page layout> | <Composed from existing primitives + route layout> | **Production Route Only**: lock via `test:visual` + `verify` journey (never copy full screens into `/styleguide`) |
 
 ## 4. 6-Point Perceptual Ergonomics Critique (`390px` & `1280px`)
 
@@ -53,4 +54,3 @@ Copy the template below into `docs/design/briefs/<slug>.md` in **Step 1** and co
 | 5 | **Overlay reflow isolation** | Opening/closing drawers, sheets, or popovers (`position: fixed` / `absolute`, `--z-overlay`) causes **0px** width shift or reflow on the underlying `--container-content` page. | PASS / FAIL | PASS / FAIL |
 | 6 | **100% System fidelity** | Real brand logo, real site shell, real domain cards, real fixture media, and semantic tokens from `tokens.css` (zero black-and-white wireframes, zero hardcoded hex/px). | PASS / FAIL | PASS / FAIL |
 ```
-

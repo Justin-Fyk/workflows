@@ -12,6 +12,8 @@ description: >-
 
 Run this sequence whenever a task introduces a new screen concept, modifies site shell navigation, or hits a **3-Tier Surface Gate** trigger (`docs/design/patterns.md`). Complete each step's **Done when** criterion before starting the next step.
 
+> **Dev-Only Surface Law:** `/canvas` (and `/styleguide`) are internal development and verification workbenches. They must be gated out of public production deployments (e.g., returning `notFound()` when `VERCEL_ENV === "production"`) while remaining active in local development and local visual/E2E test runs.
+
 ## Step 1 — Frame & Research (`docs/design/briefs/<slug>.md`)
 
 Before editing any file under the `/canvas` route (`src/app/canvas/`), write or update `docs/design/briefs/<slug>.md` using the structure in [`BRIEF-AND-RUBRIC.md`](BRIEF-AND-RUBRIC.md):
@@ -20,10 +22,12 @@ Before editing any file under the `/canvas` route (`src/app/canvas/`), write or 
 2. **External Reference Teardown**: Name 2–3 proven industry products (Linear, Instagram/TikTok mobile nav, Facebook desktop drawer, LinkedIn mobile search, Supabase Studio, Stripe Dashboard, Shadcn/Radix) and state for each:
    - **Borrow**: the exact structural or interaction mechanic adapted for this product.
    - **Reject**: the parts of that reference that conflict with the product's visual density or scope.
-3. **Component & Token Inventory**: Map every UI element in the concept to an existing shared primitive (`src/components/ui/`), domain card (`src/components/`), or semantic token (`src/styles/tokens.css`). Any element marked `New candidate` must carry a one-line reason why existing `/styleguide` primitives cannot serve it.
+3. **Component & Token Inventory + Graduation Target**: Map every UI element in the concept to an existing shared primitive (`src/components/ui/`), domain card (`src/components/`), or semantic token (`src/styles/tokens.css`). For every net-new element, classify its **Graduation Target**:
+   - **`Reusable Primitive` (Promote to `/styleguide`)**: An atomic control, input, picker, dialog, or card reused across **2+ screens**.
+   - **`Feature Screen Composition` (Production Route Only — Do NOT Add to `/styleguide`)**: A page-level layout or single-route view (e.g., Dashboard, Inbox, Profile, Discovery page). Full-page feature screens never get copied into `/styleguide`.
 4. **Modern Web Platform Check (`modern-web-guidance`)**: When any element is a `New candidate` involving modals/dialogs/popovers, drawers, responsive data tables, custom selects/forms, scroll/history restoration, or CSS animations, invoke the `modern-web-guidance` skill (`npx -y modern-web-guidance@latest search "<capability>"`) so the prototype uses modern Baseline HTML/CSS/DOM APIs instead of legacy JS workarounds.
 
-**Done when**: `docs/design/briefs/<slug>.md` is written to disk with all three tables populated and zero placeholder cells.
+**Done when**: `docs/design/briefs/<slug>.md` is written to disk with all three tables populated, graduation targets classified, and zero placeholder cells.
 
 ## Step 2 — Build in Host Chrome (`src/app/canvas/`)
 
@@ -56,11 +60,20 @@ If any rubric item fails, fix the CSS/JSX in `src/app/canvas/`, re-run `npm run 
 
 **Done when**: Every item in the 6-Point Rubric is recorded as `PASS` in `docs/design/briefs/<slug>.md` against the rendered `390px` and `1280px` screenshots.
 
-## Step 5 — Owner Sign-Off & Graduation Hand-Off
+## Step 5 — Owner Sign-Off & Graduation Rules (Primitive vs. Feature Screen)
 
 Present to the owner:
-1. The link to `docs/design/briefs/<slug>.md` (decisions, reference trade-offs, and any `?variant=` options).
+1. The link to `docs/design/briefs/<slug>.md` (decisions, reference trade-offs, graduation targets, and any `?variant=` options).
 2. The exact `/canvas` preview URLs to inspect at `390px` and `1280px`.
 3. Any open product questions.
 
-Stop and wait for explicit owner sign-off before running `to-spec`, `to-tickets`, or writing production components in `src/components/`. Once the feature later graduates to production and is co-imported into `/styleguide`, remove the graduated mock from `src/app/canvas/` in that production PR.
+Stop and wait for explicit owner sign-off before running `to-spec`, `to-tickets`, or writing production components in `src/components/`.
+
+### How Concepts Graduate When Production Ships
+Once the production feature is implemented and verified on its live route:
+1. **Always delete the graduated `/canvas` prototype** (`src/app/canvas/**` and unused `canvas.module.css` rules) in the production PR so `/canvas` stays an ephemeral workbench.
+2. **Promote ONLY Reusable Primitives (`2+` screen consumers) to `/styleguide`:**
+   - If the feature introduced a reusable UI primitive (e.g., a shared picker, input, uploader, dialog, or card), co-import that exact shared component from `src/components/ui/` into `/styleguide` inside a `<Specimen>` / `<StateCell>` matrix—with **zero duplicate mock markup** and **zero container-distorting CSS overrides** in `styleguide.module.css`.
+3. **Never Put Full-Page Feature Screens Into `/styleguide`:**
+   - Page-level compositions and single-route views (e.g., Dashboard, Discovery feed, Inbox, Profile page) **do not belong in `/styleguide`**—stuffing full-width screens with viewport media queries and sticky headers into narrow `<StateCell>` boxes distorts their layout and creates maintenance bloat.
+   - Instead, the **shipped production route itself** (backed by deterministic seeded fixtures, `test:visual` baselines at `390px` & `1280px`, and `npm run verify` feature-map journeys) serves as the canonical **Model Screen**.

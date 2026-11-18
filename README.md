@@ -68,7 +68,7 @@ flowchart TD
     VerifyGate --> BlindReview["Pre-PR Blind /code-review\nParallel Standards + Spec subagents\n(ARTIFACT + CONTRACT only; zero author rationale)"]
     BlindReview -->|"Findings"| TddLoop
     BlindReview -->|"Clean"| PR
-    PR --> GoLive["Merge -> Migrate -> Deploy -> Smoke Probe\n(+ /styleguide co-import & /canvas retirement)"]
+    PR --> GoLive["Merge -> Migrate -> Deploy -> Smoke Probe\n(Delete /canvas mock; promote ONLY 2+ screen primitives\nto dev-only /styleguide; full screens stay on production routes)"]
 ```
 
 ---
