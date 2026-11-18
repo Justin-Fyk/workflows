@@ -19,6 +19,24 @@ When the project owner is a **Product & Strategy Director**—or a fast-moving t
 
 ---
 
+## Onboarding Any Project (For Humans & AI Agents)
+
+If you (or an AI agent) are pointed at this repository to adopt this workflow on a machine or project, follow this exact two-step protocol:
+
+### Step 1: Install Global Skills & Rules on the Machine
+Clone this repository and run the sync script ([see Multi-Device Setup & Sync below](#multi-device-setup--sync)) so the agent harness has all 34 skills in `skills/` and the global guidelines in `rules/GEMINI.md`.
+
+### Step 2: Incorporate Into the Target Project (`project-init` vs. `project-adopt`)
+* **Brand-New / Empty Repository:** Invoke [`/project-init`](skills/project-init/SKILL.md). It walks the project through [`checklist.md`](skills/project-init/checklist.md) and scaffolds `AGENTS.md` from [`rules/AGENTS-TEMPLATE.md`](rules/AGENTS-TEMPLATE.md), adapting gate commands to the chosen tech stack.
+* **Existing Repository (Even Freshly Scaffolded):** Invoke [`/project-adopt`](skills/project-adopt/SKILL.md). It audits the repository against [`checklist.md`](skills/project-init/checklist.md) and performs a **surgical merge** governed by the **Override vs. Preserve Precedence Law**:
+
+| Category | Precedence Rule | Concrete Examples |
+|---|---|---|
+| **1. Workflow, Verification & Quality Mechanics** | **OVERRIDE** conflicting or weaker project processes with this Operating System | Replaces direct-to-`main` commits, post-PR code reviews, untested code, 10-ticket micro-slicing, unratified in-place UI edits, `@ts-ignore`/`.skip` suppressions, and multi-VM CI billing traps with our **Tier 1 / 1.5 / 2 workflow**, **3-Tier `/canvas` Surface Gate**, **TDD**, **Floor Guard**, **Feature-Map Verification**, and **Pre-PR Blind Adversarial `/code-review`**. |
+| **2. Project-Specific Identity, Stack, Domain & Rules** | **PRESERVE 100%** of the existing project's domain, stack, design, and custom rules | **Never** overwrites or deletes the project's tech stack/tooling (`package.json`, `pyproject.toml`, `Cargo.toml`), domain glossary (`GLOSSARY.md`), existing ADRs (`docs/adr/`), database/RLS architecture, brand design tokens (`DESIGN.md`, `tokens.css`), or project-specific business/security rules in `AGENTS.md` / `CLAUDE.md`. |
+
+---
+
 ## Master End-to-End Lifecycle
 
 ```mermaid
