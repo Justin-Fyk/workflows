@@ -27,6 +27,7 @@ Tier is a property of the project's context, chosen by the owner — never infer
 | Workflow | gate runs on every PR | least-privilege token permission, concurrency group cancelling superseded runs, pinned action versions | a deliberately broken PR goes red |
 | No silent repair | CI never writes files | same, plus failure traces/diagnostics uploaded on red runs | `git status` clean after CI on a dirty tree; red E2E runs upload artifacts |
 | Quota & 1-minute floor discipline | separate workflows per check | consolidate fast sequential steps (`migrate → deploy → smoke`, or `chromium → webkit → alert`) into single-VM jobs to avoid GitHub's 1-minute per-job rounding tax; never run high-frequency `curl` crons on CI VMs; de-duplicate pre-merge vs post-merge E2E runs | monthly billed minutes stay <50% of included quota |
+| Runner resilience & self-testing | bare setup commands | cache E2E browser binaries by OS + browser tuple + exact package version; bound `apt`/container stack boot steps with short step `timeout-minutes`, retry backoff, and valid unused-container exclusions; include each workflow file in its own path/diff filter so workflow edits self-test on PRs | setup stalls fail fast (<8m) instead of burning job timeout; workflow PRs trigger their own check |
 | Pre-PR review order | review after opening PR | run `code-review` (Blind Adversarial Contract) locally against `origin/main` *before* `gh pr create` so PRs open clean in 1 push | average PR push count stays near 1–1.5 |
 
 ## 3. Enforcement

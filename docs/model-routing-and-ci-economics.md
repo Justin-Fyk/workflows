@@ -43,7 +43,7 @@ flowchart TD
 
 Private repositories on GitHub Free (2,000 min/month) or GitHub Pro (3,000 min/month) will burn through their entire monthly quota in **12–15 days** if CI workflows are designed naively.
 
-Below are the four structural rules required to keep a full production pipeline (Typecheck + Lint + Unit Tests + Production Build + Database SQL Invariants + Playwright E2E + Auto-Deploy) under **~1,400 billed minutes/month (<50% of quota)** at **\$0 extra cost**.
+Below are the five structural rules required to keep a full production pipeline (Typecheck + Lint + Unit Tests + Production Build + Database SQL Invariants + Playwright E2E + Auto-Deploy) under **~1,400 billed minutes/month (<50% of quota)** at **\$0 extra cost**.
 
 ### Rule 1: Defeat GitHub's "1-Minute Minimum Per-Job" Rounding Tax
 * **The Trap:** GitHub Actions rounds **every individual job** in every workflow file up to the next whole minute (`ceil(duration_seconds / 60)`).
@@ -73,3 +73,10 @@ Below are the four structural rules required to keep a full production pipeline 
 ### Rule 4: Never Use GitHub Actions VMs for High-Frequency Webhook Crons
 * **The Trap:** Running an hourly `schedule: cron: "17 * * * *"` workflow in GitHub Actions just to execute a 5-second `curl -X POST https://app.example.com/api/internal/cron` boots 720 Ubuntu VMs per month = **720 billed minutes/month (24% of a 3,000-minute quota)** for 1 hour of actual network wait time.
 * **The Fix:** Trigger lightweight HTTP webhook crons from a zero-VM scheduler (Supabase `pg_cron` + `pg_net`, Cloudflare Workers free cron triggers, or Vercel Cron) or throttle GitHub Actions crons to `0 */4 * * *` (every 4 hours) with a commit-activity guard on daily database jobs.
+
+### Rule 5: Bound Setup Steps Against Registry Rate Limits & Mirror Stalls (Runner Resilience)
+* **The Trap:** Uncached E2E browser downloads, unretried anonymous Docker pulls on shared GitHub Runner IPs (e.g., AWS Public ECR / Docker Hub `Rate exceeded` or `Data limit exceeded`), and unbounded `apt-get` OS-dependency installs can silently stall for 20+ minutes until the job timeout kills the run—wasting a full job's billed minutes on an infrastructure flake. Likewise, excluding a workflow file from its own `paths:` or diff filter lets broken workflow edits merge untested.
+* **The Fix:**
+  1. **Cache browser binaries cleanly:** Cache `~/.cache/ms-playwright` keyed on `<os>-<browser-list>-<exact installed @playwright/test version>` so binary downloads skip on cache hits and never serve stale browsers when the browser tuple changes.
+  2. **Bound OS-package & container-stack setup steps:** Separate cached browser binary installs from OS-dependency installs (`install-deps`), configure short `apt` HTTP/HTTPS timeouts and retries (`Acquire::Retries "3"`, `Acquire::http::Timeout "30"`), exclude unused local stack containers (using only verified CLI container names, while keeping containers whose boot migrations create schemas your migrations depend on), wrap stack boot in a backoff retry loop with cleanup, and put short step-level `timeout-minutes` caps (`5–8m`) on setup steps while giving the overall E2E job comfortable headroom above observed green runtimes.
+  3. **Make workflow edits self-testing:** Include `.github/workflows/<file>.yml` in each workflow's own `paths:` or changed-file filter so any PR modifying a CI workflow runs that workflow live before merge.
